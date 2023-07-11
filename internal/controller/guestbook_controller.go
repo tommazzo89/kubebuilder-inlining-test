@@ -47,9 +47,21 @@ type GuestbookReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.15.0/pkg/reconcile
 func (r *GuestbookReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	log := log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	var guestbook webappv1.Guestbook
+	if err := r.Get(ctx, req.NamespacedName, &guestbook); err != nil {
+		err = client.IgnoreNotFound(err)
+		if err != nil {
+			log.Error(err, "Unable to fetch Guestbook")
+		} else {
+			log.Info("Guestbook has been deleted")
+		}
+		return ctrl.Result{}, err
+	}
+
+	log.Info("Inlined values", "HotelName", guestbook.Spec.GuestbookDefinition.HotelName, "City", guestbook.Spec.GuestbookDefinition.City)
+	log.Info("Not inlined values", "HotelName", guestbook.Spec.GuestbookDefinitionNotInlined.HotelName, "City", guestbook.Spec.GuestbookDefinitionNotInlined.City)
 
 	return ctrl.Result{}, nil
 }
